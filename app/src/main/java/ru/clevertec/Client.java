@@ -2,11 +2,12 @@ package ru.clevertec;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class Client  {
+    Server server = new Server();
     private List<Integer> data;
     private final AtomicInteger accumulator;
     private final ExecutorService executor;
@@ -29,18 +30,11 @@ public class Client  {
     }
 
     public List<Future<Integer>> request() {
-        int numRequests = data.size();
-        ExecutorService executorService = Executors.newFixedThreadPool(numRequests);
-        List<Future<Integer>> futures = new ArrayList<>();
-        for (int i = 0; i < numRequests; i++) {
-            int indexToRemove = new Random().nextInt(data.size());
-            Integer remove = data.remove(indexToRemove);
-            Callable<Integer> requestTask = () -> Server.processRequest(remove);
-            Future<Integer> future = executorService.submit(requestTask);
-            futures.add(future);
-        }
-
-        return futures;
+        ExecutorService executorService = Executors.newFixedThreadPool(data.size());
+        return data.parallelStream()
+                .map(remove -> (Callable<Integer>) () -> server.processRequest(remove))
+                .map(executorService::submit)
+                .collect(Collectors.toList());
     }
 
     public void summarize(List<Future<Integer>> futures) {

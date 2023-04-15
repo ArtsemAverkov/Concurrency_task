@@ -8,6 +8,17 @@ import java.util.concurrent.Future;
 import static org.junit.Assert.assertEquals;
 
 public class ClientTest {
+    Server server = new Server();
+
+    @Test
+    public void testClientServerInteraction() {
+        int n = 10;
+        Client client = new Client(n);
+        List<Future<Integer>> futures = client.request();
+        client.summarize(futures);
+        assertEquals(n, server.sharedList.size());
+    }
+
     @Test
     public void testRemoveAllData() {
         Client client = new Client(100);
@@ -15,6 +26,7 @@ public class ClientTest {
         client.summarize(futures);
         assertEquals(client.getData().isEmpty(),true);
     }
+
     @Test
     public void testAccumulatorSum() {
         Client client = new Client(100);
